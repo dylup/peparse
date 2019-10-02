@@ -27,25 +27,24 @@ void checkPE(FILE *peFilePtr)
 
 void parseImageFileHeader(FILE *peFilePtr)
 {
-	int signature;							// 4 bytes
+	unsigned int signature;					// 4 bytes
 	unsigned short Machine;					// 2 bytes
 	unsigned short NumberOfSections;		// 2 bytes
-	int TimeDateStamp;						// 4 bytes
-	int PtrToSymbolTable;					// 4 bytes
-	int NumberOfSymbols;					// 4 bytes
+	unsigned int TimeDateStamp;				// 4 bytes
+	unsigned int PtrToSymbolTable;			// 4 bytes
+	unsigned int NumberOfSymbols;			// 4 bytes
 	unsigned short SizeOfOptionalHeader;	// 2 bytes
 	unsigned short Characteristics;			// 2 bytes
 											// 24 total bytes
+	
+	printf("[!] IMAGE_FILE_HEADER\n");
+
 	// get to header
 	fseek(peFilePtr, 0x3c, SEEK_SET);
 	int elfanew;
 	fread(&elfanew, sizeof(int), 1, peFilePtr);
 	printf("[!] elfanew: 0x%08x\n", elfanew);
 	fseek(peFilePtr, elfanew, SEEK_SET);
-
-	int pos;
-	
-	printf("[!] IMAGE_FILE_HEADER\n");
 	
 	// PE section signature
 	fread(&signature, 4, 1, peFilePtr);
