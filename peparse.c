@@ -3,6 +3,9 @@
 #include <string.h>
 #include <time.h>
 
+unsigned short sections;
+unsigned int elfaNew;
+
 void printUsage()
 {
 	printf("[!] Usage:\n");
@@ -41,11 +44,11 @@ void parseImageFileHeader(FILE *peFilePtr)
 
 	// get to header
 	fseek(peFilePtr, 0x3c, SEEK_SET);
-	int elfanew;
+	unsigned int elfanew;
 	fread(&elfanew, sizeof(int), 1, peFilePtr);
 	printf("[!] elfanew: 0x%08x\n", elfanew);
 	fseek(peFilePtr, elfanew, SEEK_SET);
-	
+	elfaNew = elfanew;
 	// PE section signature
 	fread(&signature, 4, 1, peFilePtr);
 	printf("\t[+] PE Signature: 0x%4x\n", signature);
@@ -59,6 +62,7 @@ void parseImageFileHeader(FILE *peFilePtr)
 	// number of sections
 	fread(&NumberOfSections, 2, 1, peFilePtr);
 	printf("\t[+] # of Sections: %d\n", NumberOfSections);
+	sections = NumberOfSections;
 	
 	// timestamp
 	fread(&TimeDateStamp, sizeof(int), 1, peFilePtr);
@@ -116,7 +120,6 @@ void parseImageOptionalHeader(FILE *peFilePtr)
 	unsigned int NumberOfRvaAndSizes;				// 4 bytes
 
 	printf("[!] IMAGE_OPTIONAL_HEADER\n");
-	
 	// magic bytes for Optional header, typically 0x10b
 	fread(&Magic, sizeof(unsigned short), 1, peFilePtr);
 	printf("\t[+] Magic bytes: 0x%x\n", Magic);
@@ -233,6 +236,59 @@ void parseImageOptionalHeader(FILE *peFilePtr)
 	printf("\t[+] # RVA & Sizes: %d\n", NumberOfRvaAndSizes);
 }	
 
+void parseSectionTable(FILE *peFilePtr)
+{
+	char name[8] = {'\0'};
+	unsigned int VirtualSize;
+	unsigned int VirtualAddress;
+	unsigned int SizeOfRawData;
+	unsigned int PointerToRawData;
+	unsigned int PointerToRelocations;
+	unsigned int PointerToLineNumbers;
+	unsigned short NumberOfRelocations;
+	unsigned short NumberOfLineNumbers;
+	unsigned int Characteristics;
+
+	int i;
+	printf("[!] SECTION_TABLE:\n");
+
+	fseek(peFilePtr, 0x80, SEEK_CUR);
+	for (i = 0;  i < sections; i++)
+	{
+		// first section at 0xf8
+		fread(name, 8, 1, peFilePtr);
+		printf("\t[+] %s Section:\n", name);
+
+		fread(&VirtualSize, 4, 1, peFilePtr);
+		printf("\t\t[+] Virtual Size: 0x%x (%d bytes)\n", VirtualSize, VirtualSize);
+
+		fread(&VirtualAddress, 4, 1, peFilePtr);
+		printf("\t\t[+] Virtual Address: 0x%08x\n", VirtualAddress);
+
+		fread(&SizeOfRawData, 4, 1, peFilePtr);
+		printf("\t\t[+] Size of Raw Data: 0x%x (%d bytes)\n", SizeOfRawData, SizeOfRawData);
+
+		fread(&PointerToRawData, 4, 1, peFilePtr);
+		printf("\t\t[+] Pointer to Raw Data: 0x%08x\n", PointerToRawData);
+
+		fread(&PointerToRelocations, 4, 1, peFilePtr);
+		printf("\t\t[+] Pointer to Relocations: 0x%08x\n", PointerToRelocations);
+
+		fread(&PointerToLineNumbers, 4, 1, peFilePtr);
+		printf("\t\t[+] Pointer to Line Numbers: 0x%08x\n", PointerToLineNumbers);
+
+		fread(&NumberOfRelocations, 2, 1, peFilePtr);
+		printf("\t\t[+] Number of Relocations: %d\n", NumberOfRelocations);
+
+		fread(&NumberOfLineNumbers, 2, 1, peFilePtr);
+		printf("\t\t[+] Number of Line Numbers: %d\n", NumberOfLineNumbers);
+
+		fread(&Characteristics, 4, 1, peFilePtr);
+		printf("\t\t[+] Characteristics: 0x%x\n", Characteristics);
+	}
+
+}
+
 int main(int argc, char *argv[])
 {
 	// must supply proper amount of args
@@ -258,6 +314,7 @@ int main(int argc, char *argv[])
 	checkPE(peFilePtr);
 	parseImageFileHeader(peFilePtr);
 	parseImageOptionalHeader(peFilePtr);
+	parseSectionTable(peFilePtr);
 
 	return 0;
 }
