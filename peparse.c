@@ -5,6 +5,9 @@
 
 unsigned short sections;
 unsigned int elfaNew;
+unsigned int importTableRVA;
+unsigned int sizeOfImportTable;
+unsigned int imageBase;
 
 void printUsage()
 {
@@ -117,7 +120,7 @@ void parseImageOptionalHeader(FILE *peFilePtr)
 	unsigned int SizeOfHeapReserve;					// 4 bytes
 	unsigned int SizeOfHeapCommit;					// 4 bytes
 	unsigned int LoaderFlags;						// 4 bytes
-	unsigned int NumberOfRvaAndSizes;				// 4 bytes
+	unsigned int NumberOfRVAAndSizes;				// 4 bytes
 
 	printf("[!] IMAGE_OPTIONAL_HEADER\n");
 	// magic bytes for Optional header, typically 0x10b
@@ -156,6 +159,7 @@ void parseImageOptionalHeader(FILE *peFilePtr)
 	// image base
 	fread(&ImageBase, 4, 1, peFilePtr);
 	printf("\t[+] Image Base: 0x%08x\n", ImageBase);
+	imageBase = ImageBase;
 
 	// Section Alignment (page size)
 	fread(&SectionAlignment, 4, 1, peFilePtr);
@@ -231,28 +235,167 @@ void parseImageOptionalHeader(FILE *peFilePtr)
 	if (LoaderFlags != 0)
 		printf("\t\t[!] LoaderFlags must be 0\n");
 
-	// NumberRvaAndSizes
-	fread(&NumberOfRvaAndSizes, 4, 1, peFilePtr);
-	printf("\t[+] # RVA & Sizes: %d\n", NumberOfRvaAndSizes);
+	// NumberRVAAndSizes
+	fread(&NumberOfRVAAndSizes, 4, 1, peFilePtr);
+	printf("\t[+] # RVA & Sizes: %d\n", NumberOfRVAAndSizes);
 }	
+
+void parseDataDirectories(FILE *peFilePtr)
+{
+	unsigned int ExportTableRVA;					// 4 bytes
+	unsigned int SizeOfExportDirectory;				// 4 bytes
+	unsigned int ImportTableRVA;					// 4 bytes
+	unsigned int SizeOfImportDirectory;				// 4 bytes
+	unsigned int ResourceTableRVA;					// 4 bytes
+	unsigned int SizeOfResourceDirectory;			// 4 bytes
+	unsigned int ExceptionTableRVA;					// 4 bytes
+	unsigned int SizeOfExceptionDirectory;			// 4 bytes
+	unsigned int CertificateTableAddr;				// 4 bytes
+	unsigned int SizeOfSecurityDirectory;			// 4 bytes
+	unsigned int BaseRelocationTableRVA;			// 4 bytes
+	unsigned int SizeOfBaseRelocationDirectory;		// 4 bytes
+	unsigned int DebugRVA;							// 4 bytes
+	unsigned int SizeOfDebugDirectory;				// 4 bytes
+	unsigned int CopyrightNoteRVA;					// 4 bytes
+	unsigned int SizeOfCopyRightNote;				// 4 bytes
+	unsigned int GlobalPtrRVA;						// 4 bytes
+	unsigned int Unused;							// 4 bytes
+	unsigned int TLSTableRVA;						// 4 bytes
+	unsigned int SizeOfTLSDirectory;				// 4 bytes
+	unsigned int LoadConfigTableRVA;				// 4 bytes
+	unsigned int SizeOfLoadConfigDirectory;			// 4 bytes
+	unsigned int BoundImportRVA;					// 4 bytes
+	unsigned int SizeOfBoundImportDirectory;		// 4 bytes
+	unsigned int ImportAddressTableRVA;				// 4 bytes
+	unsigned int SizeOfImportAddressDirectory;		// 4 bytes
+	unsigned int DelayImportDescriptorRVA;			// 4 bytes
+	unsigned int SizeOfDelayImportDirectory;		// 4 bytes
+	unsigned int CLRRuntimeHeaderRVA;				// 4 bytes
+	unsigned int SizeOfCOMHeader;					// 4 bytes
+	unsigned int Zero1;								// 4 bytes
+	unsigned int Zero2;								// 4 bytes
+
+	printf("[!] Data Directories:\n");
+	
+	fread(&ExportTableRVA, 4, 1, peFilePtr);
+	printf("\t[+] Export Table RVA: 0x%08x\n", ExportTableRVA);
+
+	fread(&SizeOfExportDirectory, 4, 1, peFilePtr);
+	printf("\t[+] Size of Export Directory: 0x%x (%d bytes)\n", SizeOfExportDirectory, SizeOfExportDirectory);
+
+	fread(&ImportTableRVA, 4, 1, peFilePtr);
+	printf("\t[+] Import Table RVA: 0x%08x\n", ImportTableRVA);
+	importTableRVA = ImportTableRVA;
+
+	fread(&SizeOfImportDirectory, 4, 1, peFilePtr);
+	printf("\t[+] Size of Import Directory: 0x%x (%d bytes)\n", SizeOfImportDirectory, SizeOfImportDirectory);
+	sizeOfImportTable = SizeOfImportDirectory;
+
+	fread(&ResourceTableRVA, 4, 1, peFilePtr);
+	printf("\t[+] Resource Table RVA: 0x%08x\n", ResourceTableRVA);
+
+	fread(&SizeOfResourceDirectory, 4, 1, peFilePtr);
+	printf("\t[+] Size of Resource Directory: 0x%x (%d bytes)\n", SizeOfResourceDirectory, SizeOfResourceDirectory);
+
+	fread(&ExceptionTableRVA, 4, 1, peFilePtr);
+	printf("\t[+] Exception Table RVA: 0x%08x\n", ExceptionTableRVA);
+
+	fread(&SizeOfExceptionDirectory, 4, 1, peFilePtr);
+	printf("\t[+] Size of Exception Directory: 0x%x (%d bytes)\n", SizeOfExceptionDirectory, SizeOfExceptionDirectory);
+
+	fread(&CertificateTableAddr, 4, 1, peFilePtr);
+	printf("\t[+] Certificate Table Address: 0x%08x\n", CertificateTableAddr);
+
+	fread(&SizeOfSecurityDirectory, 4, 1, peFilePtr);
+	printf("\t[+] Size of Security Directory: 0x%x (%d bytes)\n", SizeOfSecurityDirectory, SizeOfSecurityDirectory);
+
+	fread(&BaseRelocationTableRVA, 4, 1, peFilePtr);
+	printf("\t[+] Base Relocation Table RVA: 0x%08x\n", BaseRelocationTableRVA);
+
+	fread(&SizeOfBaseRelocationDirectory, 4, 1, peFilePtr);
+	printf("\t[+] Size of Base Relocation Directory: 0x%x (%d bytes)\n", SizeOfBaseRelocationDirectory, SizeOfBaseRelocationDirectory);
+
+	fread(&DebugRVA, 4, 1, peFilePtr);
+	printf("\t[+] Debug RVA: 0x%08x\n", DebugRVA);
+
+	fread(&SizeOfDebugDirectory, 4, 1, peFilePtr);
+	printf("\t[+] Size of Debug Directory: 0x%x (%d bytes)\n", SizeOfDebugDirectory, SizeOfDebugDirectory);
+
+	fread(&CopyrightNoteRVA, 4, 1, peFilePtr);
+	printf("\t[+] Copyright Note RVA: 0x%08x\n", CopyrightNoteRVA);
+
+	fread(&SizeOfCopyRightNote, 4, 1, peFilePtr);
+	printf("\t[+] Size of Copyright Note: 0x%x (%d bytes)\n", SizeOfCopyRightNote, SizeOfCopyRightNote);
+
+	fread(&GlobalPtrRVA, 4, 1, peFilePtr);
+	printf("\t[+] Global Pointer RVA: 0x%08x\n", GlobalPtrRVA);
+
+	fread(&Unused, 4, 1, peFilePtr);
+	printf("\t[+] Unused: 0x%04x\n", Unused);
+	if (Unused != 0)
+		printf("\t\t[?] Field is normally unused\n");
+
+	fread(&TLSTableRVA, 4, 1, peFilePtr);
+	printf("\t[+] TLS Table RVA: 0x%08x\n", TLSTableRVA);
+
+	fread(&SizeOfTLSDirectory, 4, 1, peFilePtr);
+	printf("\t[+] Size of TLS Directory: 0x%x (%d bytes)\n", SizeOfTLSDirectory, SizeOfTLSDirectory);
+
+	fread(&LoadConfigTableRVA, 4, 1, peFilePtr);
+	printf("\t[+] Load Config Table RVA: 0x%08x\n", LoadConfigTableRVA);
+
+	fread(&SizeOfLoadConfigDirectory, 4, 1, peFilePtr);
+	printf("\t[+] Size of Load Config Directory: 0x%x (%d bytes)\n", SizeOfLoadConfigDirectory, SizeOfLoadConfigDirectory);
+
+	fread(&BoundImportRVA, 4, 1, peFilePtr);
+	printf("\t[+] Bound Import RVA: 0x%08x\n", BoundImportRVA);
+
+	fread(&SizeOfBoundImportDirectory, 4, 1, peFilePtr);
+	printf("\t[+] Size of Bound Import Directory: 0x%x (%d bytes)\n", SizeOfBoundImportDirectory, SizeOfBoundImportDirectory);
+
+	fread(&ImportAddressTableRVA, 4, 1, peFilePtr);
+	printf("\t[+] Import Address Table RVA: 0x%08x\n", ImportAddressTableRVA);
+
+	fread(&SizeOfImportAddressDirectory, 4, 1, peFilePtr);
+	printf("\t[+] Size of Import Address Directory: 0x%x (%d bytes)\n", SizeOfImportAddressDirectory, SizeOfImportAddressDirectory);
+
+	fread(&DelayImportDescriptorRVA, 4, 1, peFilePtr);
+	printf("\t[+] Delay Import Descriptor RVA: 0x%08x\n", DelayImportDescriptorRVA);
+
+	fread(&SizeOfDelayImportDirectory, 4, 1, peFilePtr);
+	printf("\t[+] Size of Delay Import Directory: 0x%x (%d bytes)\n", SizeOfDelayImportDirectory, SizeOfDelayImportDirectory);
+
+	fread(&CLRRuntimeHeaderRVA, 4, 1, peFilePtr);
+	printf("\t[+] CLR Runtime RVA: 0x%08x\n", CLRRuntimeHeaderRVA);
+
+	fread(&SizeOfCOMHeader, 4, 1, peFilePtr);
+	printf("\t[+] Size of COM Header: 0x%x (%d bytes)\n", SizeOfCOMHeader, SizeOfCOMHeader);
+
+	fread(&Zero1, 4, 1, peFilePtr);
+	printf("\t[+] Reserved 1: 0x%04x\n", Zero1);
+
+	fread(&Zero2, 4, 1, peFilePtr);
+	printf("\t[+] Reserved 2: 0x%04x\n", Zero2);
+}
 
 void parseSectionTable(FILE *peFilePtr)
 {
-	char name[8] = {'\0'};
-	unsigned int VirtualSize;
-	unsigned int VirtualAddress;
-	unsigned int SizeOfRawData;
-	unsigned int PointerToRawData;
-	unsigned int PointerToRelocations;
-	unsigned int PointerToLineNumbers;
-	unsigned short NumberOfRelocations;
-	unsigned short NumberOfLineNumbers;
-	unsigned int Characteristics;
+	char name[8] = {'\0'};					// 8 bytes
+	unsigned int VirtualSize;				// 4 bytes
+	unsigned int VirtualAddress;			// 4 bytes
+	unsigned int SizeOfRawData;				// 4 bytes
+	unsigned int PointerToRawData;			// 4 bytes
+	unsigned int PointerToRelocations;		// 4 bytes
+	unsigned int PointerToLineNumbers;		// 4 bytes
+	unsigned short NumberOfRelocations;		// 2 bytes
+	unsigned short NumberOfLineNumbers;		// 2 bytes
+	unsigned int Characteristics;			// 4 bytes
+											// 40 bytes
 
 	int i;
 	printf("[!] SECTION_TABLE:\n");
 
-	fseek(peFilePtr, 0x80, SEEK_CUR);
+	//fseek(peFilePtr, 0x80, SEEK_CUR);
 	for (i = 0;  i < sections; i++)
 	{
 		// first section at 0xf8
@@ -314,6 +457,7 @@ int main(int argc, char *argv[])
 	checkPE(peFilePtr);
 	parseImageFileHeader(peFilePtr);
 	parseImageOptionalHeader(peFilePtr);
+	parseDataDirectories(peFilePtr);
 	parseSectionTable(peFilePtr);
 
 	return 0;
