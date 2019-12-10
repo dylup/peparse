@@ -1,3 +1,4 @@
 *.exe
 *.out
 peparse
+.vscode/c_cpp_properties.json
